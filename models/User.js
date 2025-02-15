@@ -3,6 +3,7 @@ const Joi = require("joi");
 Joi.objectId = require("joi-objectid")(Joi);
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { Patient, Doctor } = require("../config/misc");
 
 const schema = new mongoose.Schema({
   name: { type: String, required: true, maxlength: 255 },
@@ -14,13 +15,24 @@ const schema = new mongoose.Schema({
     maxlength: 255,
   },
   password: { type: String, required: true },
-  role: { type: String, enum: ["Patient", "Doctor"], required: true },
+  role: { type: String, enum: [Patient, Doctor], required: true },
+  patients: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  doctor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  publicKey: { type: String },
+  privateKey: { type: String }, //! This is not a good practice, but for the sake of the the demo purposes. private must be sent to the client when the user is created and must be stored in a secure place, never in the database.
+  checklist: [
+    { description: String, completed: { type: Boolean, default: false } },
+  ],
 });
 
 schema.methods.generateToken = function () {
-  const token = jwt.sign({ _id: this._id }, process.env.UNIQUE_PRIVATE_KEY, {
-    expiresIn: "12h",
-  });
+  const token = jwt.sign(
+    { _id: this._id, role: this.role },
+    process.env.UNIQUE_PRIVATE_KEY,
+    {
+      expiresIn: "12h",
+    }
+  );
   return token;
 };
 
@@ -56,6 +68,14 @@ module.exports.validateSignUp2 = (account) => {
   const schema = Joi.object({
     code: Joi.string().required(),
     sessionId: Joi.objectId().required(),
+  });
+  return schema.validate(account);
+};
+
+module.exports.validateLogin = (account) => {
+  const schema = Joi.object({
+    email: Joi.string().required(),
+    password: Joi.string().required(),
   });
   return schema.validate(account);
 };

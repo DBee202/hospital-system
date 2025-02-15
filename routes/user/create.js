@@ -4,7 +4,9 @@ const { validateSignup1, User, validateSignUp2 } = require("../../models/User");
 const { routeHandler } = require("../../startup/expressMiddlewares");
 const { Session } = require("../../models/Session");
 const { initTransaction } = require("../../config/initTransaction");
+const { generateKeys } = require("./abstracts/abstracts");
 
+//This route is used to create a new user step 1
 router.post(
   "/step-1",
   routeHandler(async (req, res) => {
@@ -37,7 +39,7 @@ router.post(
       name: req.body.name,
       email: req.body.email,
       //====>This is a random 4 character code that will be sent to the user's email
-      //==> This code will be used to verify the user's email address but for now, we will just store it in the database and send as a response to the user because this is just a demo
+      //==> This code will be used to verify the user's email address but for now, we will just store it in the database and send as a response to the user because this is just a demo. In a real-world scenario, you would send this code to the user's email
       codeGenerated: Math.random().toString(36).substring(2, 6),
       password: await bcrypt.hash(req.body.password, salt),
       role: req.body.role,
@@ -53,6 +55,7 @@ router.post(
   })
 );
 
+//This route is used to create a new user step 2 after the user has confirmed the code sent to their email
 router.post(
   "/step-2",
   routeHandler(async (req, res) => {
@@ -63,18 +66,22 @@ router.post(
       });
 
     const session = await Session.findById(req.body.sessionId);
-    if (!session) return res.status(400).send({ message: "Invalid session" });
+    if (!session) return res.status(404).send({ message: "Invalid session" });
 
     if (session.codeGenerated !== req.body.code)
       return res.status(400).send({ message: "Invalid code" });
 
     session.codeConfirmed = true;
 
+    const { publicKey, privateKey } = generateKeys();
+
     const user = new User({
       name: session.name,
       email: session.email,
       password: session.password,
       role: session.role,
+      publicKey,
+      privateKey, //! This is not a good practice, but for the sake of the the demo purposes. private must be sent to the client when the user is created and must be stored in a secure place, never in the database.
     });
 
     await initTransaction(async (transaction) => {
