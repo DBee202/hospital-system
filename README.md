@@ -11,7 +11,8 @@ full system design documentation: https://docs.google.com/document/d/1PJCQ7PUN7u
  
 
 
-Justification for Scheduling & Note Processing
+**Justification for Scheduling & Note Processing**
+
 Doctors can create encrypted medical notes for patients. In addition to storing the notes securely, the system also:
 Extracts key insights: Using processDoctorNote(), the system extracts key action items and a treatment plan from the doctor’s note.
 Schedules reminders for patients: Patients receive automated reminders based on the treatment plan.
