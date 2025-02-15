@@ -16,6 +16,8 @@ module.exports.enableMiddlewares = function (app) {
   app.use("/api/update/users/", require("../routes/user/update"));
   app.use("/api/note/create", require("../routes/notes/create"));
   app.use("/api/note/read", require("../routes/notes/read"));
+  app.use("/api/reminders/read", require("../routes/reminders/read"));
+  app.use("/api/reminders/update", require("../routes/reminders/update"));
 
   app.use((req, res) =>
     res.status(404).send("The requested resource was not found")
